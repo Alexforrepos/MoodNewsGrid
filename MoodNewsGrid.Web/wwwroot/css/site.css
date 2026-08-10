@@ -1,0 +1,50 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f9; color: #1a1a1a; }
+
+.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 24px; background: #fff; border-bottom: 1px solid #e5e5e5;
+}
+.logo { font-weight: 700; font-size: 18px; text-decoration: none; color: #1a1a1a; }
+.btn-refresh {
+    background: #1a1a1a; color: #fff; border: none; padding: 8px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+.mood-switcher { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.mood-btn {
+    padding: 8px 14px; border-radius: 20px; background: #fff; border: 1px solid #ddd;
+    text-decoration: none; color: #333; font-size: 14px;
+}
+.mood-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.news-card {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px;
+    text-decoration: none; color: inherit; display: block; transition: box-shadow .15s;
+}
+.news-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+.news-source { font-size: 12px; color: #888; margin-bottom: 6px; }
+.news-title { font-size: 16px; margin: 0 0 8px; }
+.news-excerpt { font-size: 14px; color: #555; margin: 0; }
+
+.empty-state { color: #777; }
+
+.back-link { display: inline-block; margin-bottom: 16px; color: #555; text-decoration: none; }
+
+.detail-title { margin-bottom: 6px; }
+.detail-meta { display: flex; gap: 16px; color: #777; font-size: 14px; margin-bottom: 16px; }
+.detail-meta a { color: #1a1a1a; }
+
+.facts-ok { color: #1a7f37; background: #e9f7ee; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+.facts-warning { color: #8a4b00; background: #fff3e0; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.compare-col { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px; }
+.compare-col h4 { margin-top: 0; }
+
+@media (max-width: 700px) {
+    .compare-grid { grid-template-columns: 1fr; }
+}

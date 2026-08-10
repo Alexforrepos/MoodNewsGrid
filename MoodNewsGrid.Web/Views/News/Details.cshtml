@@ -1,0 +1,44 @@
+@model NewsItem
+@{
+    var selectedMood = (Mood)ViewBag.SelectedMood;
+    var allMoods = (Mood[])ViewBag.AllMoods;
+    var rewrite = (NewsRewrite)ViewBag.Rewrite;
+}
+
+<a class="back-link" href="@Url.Action("Index", new { mood = selectedMood })">&larr; Назад к гриду</a>
+
+<nav class="mood-switcher">
+    @foreach (var mood in allMoods)
+    {
+        var isActive = mood == selectedMood ? "active" : "";
+        <a class="mood-btn @isActive" href="@Url.Action("Details", new { id = Model.Id, mood })">@mood</a>
+    }
+</nav>
+
+<h1 class="detail-title">@Model.Title</h1>
+<div class="detail-meta">
+    <span>@Model.SourceName · @Model.PublishedAt.ToString("dd.MM.yyyy HH:mm")</span>
+    <a href="@Model.SourceUrl" target="_blank" rel="noopener">Оригинал источника &#8599;</a>
+</div>
+
+@if (!rewrite.FactsCheckPassed)
+{
+    <div class="facts-warning">
+        ⚠ Проверка фактов не пройдена полностью. Возможно расхождение: @rewrite.FactsCheckIssues
+    </div>
+}
+else
+{
+    <div class="facts-ok">✓ Факты (числа, имена, места, цитаты) сверены с оригиналом</div>
+}
+
+<div class="compare-grid">
+    <div class="compare-col">
+        <h4>Оригинал</h4>
+        <p>@Model.OriginalText</p>
+    </div>
+    <div class="compare-col">
+        <h4>Переписано: @selectedMood</h4>
+        <p>@rewrite.RewrittenText</p>
+    </div>
+</div>

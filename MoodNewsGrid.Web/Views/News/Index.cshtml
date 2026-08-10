@@ -1,0 +1,69 @@
+@model IReadOnlyList<NewsItem>
+
+@{
+    var selectedMood = (Mood)ViewBag.SelectedMood;
+    var allMoods = (Mood[])ViewBag.AllMoods;
+
+    var rewrites =
+        (Dictionary<Guid, NewsRewrite>)ViewBag.Rewrites;
+}
+
+<nav class="mood-switcher">
+    @foreach (var mood in allMoods)
+    {
+        var isActive = mood == selectedMood ? "active" : "";
+
+        <a class="mood-btn @isActive"
+           href="@Url.Action("Index", new { mood })">
+            @mood
+        </a>
+    }
+</nav>
+
+@if (Model.Count == 0)
+{
+    <p class="empty-state">
+        Пока нет новостей. Нажмите «Обновить новости» вверху,
+        чтобы подтянуть их из RSS-источников.
+    </p>
+}
+
+<div class="news-grid">
+    @foreach (var item in Model)
+    {
+        var rewrite = rewrites[item.Id];
+
+        var text = rewrite.RewrittenText;
+
+        var excerpt = text.Length > 160
+            ? text[..160] + "…"
+            : text;
+
+        <a class="news-card"
+           href="@Url.Action(
+               "Details",
+               new
+               {
+                   id = item.Id,
+                   mood = selectedMood
+               })">
+
+            <div class="news-source">
+                @item.SourceName ·
+                @item.PublishedAt.ToString("dd.MM.yyyy HH:mm")
+            </div>
+
+            <h3 class="news-title">
+                @item.Title
+            </h3>
+
+            <p class="news-excerpt">
+                @excerpt
+            </p>
+
+            <div class="news-mood">
+                @selectedMood
+            </div>
+        </a>
+    }
+</div>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mood News Grid</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="topbar">
+        <a class="logo" href="/">Mood News Grid</a>
+        <form method="post" action="/News/Refresh">
+            <button type="submit" class="btn-refresh">Обновить новости</button>
+        </form>
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+</body>
+</html>

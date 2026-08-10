@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: moodnews-postgres
+    environment:
+      POSTGRES_DB: moodnews
+      POSTGRES_USER: moodnews
+      POSTGRES_PASSWORD: moodnews_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moodnews"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: MoodNewsGrid.Web/Dockerfile
+    container_name: moodnews-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=moodnews;Username=moodnews;Password=moodnews_pass"
+
+      Llm__ApiKey: "${LLM_API_KEY}"
+      Llm__BaseUrl: "https://openrouter.ai/api/v1"
+      Llm__Model: "z-ai/glm-4.5-air"
+
+volumes:
+  pgdata:
