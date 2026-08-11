@@ -37,10 +37,10 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-}
+// if (!app.Environment.IsDevelopment())
+// {
+//     app.UseExceptionHandler("/Home/Error");
+// }
 
 app.UseStaticFiles();
 app.UseRouting();

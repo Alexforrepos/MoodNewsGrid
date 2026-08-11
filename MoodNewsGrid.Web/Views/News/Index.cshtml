@@ -5,7 +5,9 @@
     var allMoods = (Mood[])ViewBag.AllMoods;
 
     var rewrites =
-        (Dictionary<Guid, NewsRewrite>)ViewBag.Rewrites;
+        (Dictionary<Guid, NewsRewrite?>)ViewBag.Rewrites;
+
+    var rateLimited = (bool)ViewBag.RateLimited;
 }
 
 <nav class="mood-switcher">
@@ -20,6 +22,16 @@
     }
 </nav>
 
+@if (rateLimited)
+{
+    <div class="rate-limit-warning">
+        ⚠ Достигнут лимит запросов к LLM (OpenRouter вернул 429 Too Many Requests).
+        Часть новостей ниже показана в оригинальном тексте вместо переписанного —
+        попробуйте обновить страницу через минуту-другую, уже сгенерированные
+        рерайты подтянутся из кэша мгновенно.
+    </div>
+}
+
 @if (Model.Count == 0)
 {
     <p class="empty-state">
@@ -33,7 +45,8 @@
     {
         var rewrite = rewrites[item.Id];
 
-        var text = rewrite.RewrittenText;
+        // Если рерайта нет (не успели сгенерировать из-за лимита) — показываем оригинал.
+        var text = rewrite?.RewrittenText ?? item.OriginalText;
 
         var excerpt = text.Length > 160
             ? text[..160] + "…"
@@ -61,9 +74,14 @@
                 @excerpt
             </p>
 
-            <div class="news-mood">
-                @selectedMood
-            </div>
+            @if (rewrite is null)
+            {
+                <div class="news-mood pending">оригинал (лимит API)</div>
+            }
+            else
+            {
+                <div class="news-mood">@selectedMood</div>
+            }
         </a>
     }
 </div>

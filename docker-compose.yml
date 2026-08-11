@@ -34,7 +34,7 @@ services:
 
       Llm__ApiKey: "${LLM_API_KEY}"
       Llm__BaseUrl: "https://openrouter.ai/api/v1"
-      Llm__Model: "z-ai/glm-4.5-air"
+      Llm__Model: "inclusionai/ling-3.0-tiny:free"
 
 volumes:
   pgdata:

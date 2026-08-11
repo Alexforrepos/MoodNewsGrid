@@ -2,7 +2,9 @@
 @{
     var selectedMood = (Mood)ViewBag.SelectedMood;
     var allMoods = (Mood[])ViewBag.AllMoods;
-    var rewrite = (NewsRewrite)ViewBag.Rewrite;
+    var rewrite = (NewsRewrite?)ViewBag.Rewrite;
+    var rateLimited = (bool)ViewBag.RateLimited;
+    var retryAfterSeconds = (double?)ViewBag.RetryAfterSeconds;
 }
 
 <a class="back-link" href="@Url.Action("Index", new { mood = selectedMood })">&larr; Назад к гриду</a>
@@ -21,13 +23,29 @@
     <a href="@Model.SourceUrl" target="_blank" rel="noopener">Оригинал источника &#8599;</a>
 </div>
 
-@if (!rewrite.FactsCheckPassed)
+@if (rateLimited)
+{
+    <div class="rate-limit-warning">
+        ⚠ Лимит запросов к LLM исчерпан (OpenRouter вернул 429 Too Many Requests).
+        Переписанный текст для настроения «@selectedMood» пока не удалось сгенерировать —
+        ниже показан оригинал вместо рерайта.
+        @if (retryAfterSeconds is not null)
+        {
+            <text>Провайдер просит подождать ~@Math.Ceiling(retryAfterSeconds.Value) сек. и попробовать снова.</text>
+        }
+        else
+        {
+            <text>Попробуйте обновить страницу через минуту-другую.</text>
+        }
+    </div>
+}
+else if (rewrite is not null && !rewrite.FactsCheckPassed)
 {
     <div class="facts-warning">
         ⚠ Проверка фактов не пройдена полностью. Возможно расхождение: @rewrite.FactsCheckIssues
     </div>
 }
-else
+else if (rewrite is not null)
 {
     <div class="facts-ok">✓ Факты (числа, имена, места, цитаты) сверены с оригиналом</div>
 }
@@ -39,6 +57,6 @@ else
     </div>
     <div class="compare-col">
         <h4>Переписано: @selectedMood</h4>
-        <p>@rewrite.RewrittenText</p>
+        <p>@(rewrite?.RewrittenText ?? Model.OriginalText)</p>
     </div>
 </div>

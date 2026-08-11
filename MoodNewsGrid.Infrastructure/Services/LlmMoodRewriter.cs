@@ -13,20 +13,20 @@ public class LlmOptions
     // OpenRouter OpenAI-compatible API
     public string BaseUrl { get; set; } = "https://openrouter.ai/api/v1";
 
-    // GLM-4.5-Air через OpenRouter
-    public string Model { get; set; } = "z-ai/glm-4.5-air";
+    public string Model { get; set; } = "inclusionai/ling-3.0-tiny:free";
 }
 
 /// <summary>
 /// Переписывает новости под заданное настроение
-/// через OpenRouter + GLM-4.5-Air.
+/// через OpenRouter.
 /// </summary>
 public class LlmMoodRewriter(
     HttpClient httpClient,
     LlmOptions options) : IMoodRewriter
 {
     public async Task<string> RewriteAsync(
-        string originalText,
+        string title,
+        string? originalText,
         Mood mood,
         CancellationToken ct = default)
     {
@@ -49,36 +49,41 @@ public class LlmMoodRewriter(
         };
 
         var systemPrompt = """
-            Ты — профессиональный редактор новостей.
+            Ты переписываешь новостные тексты согласно указанному настроению.
+            newsItem.Title,
+            newsItem.OriginalText,
+            mood,
+            ct);
+            Верни только готовый переписанный текст.
+            Не объясняй свои действия.
+            Не показывай рассуждения.
+            Не предлагай несколько вариантов.
 
-            Тебе передаётся оригинальный текст новости.
-            Твоя задача — переписать его в указанной эмоциональной тональности.
+            Очень важно:
+            - сохраняй все факты исходной новости;
+            - не добавляй новые факты;
+            - не придумывай цитаты;
+            - не придумывай имена;
+            - не придумывай даты;
+            - не придумывай числа;
+            - не придумывай названия организаций;
+            - не придумывай географические названия;
+            - не меняй смысл события;
+            - не утверждай то, чего нет в исходных данных.
 
-            КРИТИЧЕСКИ ВАЖНО:
+            У новости есть название и, возможно, основной текст.
 
-            1. Не придумывай никаких новых фактов.
-            2. Не удаляй важные факты из оригинала.
-            3. Не меняй имена людей.
-            4. Не меняй даты.
-            5. Не меняй числа.
-            6. Не меняй названия организаций.
-            7. Не меняй географические названия.
-            8. Не меняй смысл событий.
-            9. Не выдумывай цитаты.
-            10. Не добавляй информацию, которой нет в оригинале.
+            Если основной текст отсутствует или пустой:
+            - работай только с названием;
+            - не выдумывай подробности;
+            - сохрани информацию из названия;
+            - верни только переработанное название.
 
-            Можно менять только:
-            - стиль;
-            - эмоциональную окраску;
-            - порядок предложений;
-            - формулировки;
-            - ритм текста.
-
-            Верни ТОЛЬКО готовый текст новости.
-            Не добавляй пояснений.
-            Не добавляй заголовок.
-            Не добавляй кавычки вокруг всего текста.
-            Не пиши "Вот переписанный текст:".
+            Если основной текст присутствует:
+            - используй название и основной текст вместе;
+            - сохрани факты из обоих;
+            - можешь изменить формулировки и структуру;
+            - не добавляй информацию, которой нет в исходных данных.
             """;
 
         var userPrompt =
@@ -86,9 +91,15 @@ public class LlmMoodRewriter(
             Требуемая тональность:
             {moodInstruction}
 
-            Оригинальный текст новости:
+            Название новости:
+            {title}
 
-            {originalText}
+            Основной текст новости:
+            {(string.IsNullOrWhiteSpace(originalText)
+                ? "(текст отсутствует)"
+                : originalText)}
+
+            Перепиши новость в требуемой тональности.
             """;
 
         var requestBody = new
@@ -109,12 +120,8 @@ public class LlmMoodRewriter(
                 }
             },
 
-            // Для новостей лучше держать температуру ниже,
-            // чтобы модель меньше фантазировала.
             temperature = 0.5,
-
-            // Не позволяем модели генерировать бесконечно длинный текст.
-            max_tokens = 2000
+            max_tokens = 1500
         };
 
         using var request = new HttpRequestMessage(
@@ -131,7 +138,6 @@ public class LlmMoodRewriter(
                 "Bearer",
                 options.ApiKey);
 
-        // Не обязательны, но рекомендуются OpenRouter.
         request.Headers.TryAddWithoutValidation(
             "HTTP-Referer",
             "http://localhost");
@@ -147,15 +153,29 @@ public class LlmMoodRewriter(
 
         var json = await response.Content.ReadAsStringAsync(ct);
 
-        // Очень важно:
-        // вместо безымянного EnsureSuccessStatusCode()
-        // показываем реальную ошибку OpenRouter.
+        if (response.StatusCode ==
+            System.Net.HttpStatusCode.TooManyRequests)
+        {
+            TimeSpan? retryAfter =
+                response.Headers.RetryAfter?.Delta;
+
+            throw new LlmRateLimitException(
+                $"OpenRouter вернул 429 Too Many Requests — " +
+                $"превышен лимит запросов к модели {options.Model}. " +
+                $"Ответ: {json}",
+                retryAfter);
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
                 $"OpenRouter API error {(int)response.StatusCode} " +
                 $"({response.StatusCode}): {json}");
         }
+
+        Console.WriteLine("=== OPENROUTER RESPONSE ===");
+        Console.WriteLine(json);
+        Console.WriteLine("===========================");
 
         using var doc = JsonDocument.Parse(json);
 
@@ -175,18 +195,40 @@ public class LlmMoodRewriter(
                 out var content))
         {
             throw new InvalidOperationException(
-                $"OpenRouter response does not contain message.content. " +
-                $"Response: {json}");
+                $"OpenRouter response does not contain " +
+                $"message.content. Response: {json}");
         }
 
         var text = content.GetString();
 
         if (string.IsNullOrWhiteSpace(text))
         {
+            var finishReason =
+                choices[0].TryGetProperty(
+                    "finish_reason",
+                    out var finishReasonElement)
+                    ? finishReasonElement.GetString()
+                    : null;
+
+            var nativeFinishReason =
+                choices[0].TryGetProperty(
+                    "native_finish_reason",
+                    out var nativeFinishReasonElement)
+                    ? nativeFinishReasonElement.GetString()
+                    : null;
+
+            Console.WriteLine(
+                $"OpenRouter returned no final content. " +
+                $"FinishReason={finishReason}, " +
+                $"NativeFinishReason={nativeFinishReason}");
+
             throw new InvalidOperationException(
-                "OpenRouter returned an empty response.");
+                $"OpenRouter returned no final content. " +
+                $"FinishReason={finishReason}, " +
+                $"NativeFinishReason={nativeFinishReason}");
         }
 
         return text.Trim();
     }
+
 }

@@ -83,9 +83,10 @@ public class NewsService(
         else
         {
             rewrittenText = await rewriter.RewriteAsync(
-                newsItem.OriginalText,
-                mood,
-                ct);
+            newsItem.Title,
+            newsItem.OriginalText,
+            mood,
+            ct);
         }
 
         var check = factChecker.Check(

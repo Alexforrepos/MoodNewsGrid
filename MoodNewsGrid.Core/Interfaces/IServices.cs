@@ -11,7 +11,10 @@ public interface INewsFetcher
 /// <summary>Переписывает текст новости под заданное настроение через LLM.</summary>
 public interface IMoodRewriter
 {
-    Task<string> RewriteAsync(string originalText, Mood mood, CancellationToken ct = default);
+    Task<string> RewriteAsync(string title,
+        string? originalText,
+        Mood mood,
+        CancellationToken ct = default);
 }
 
 /// <summary>Проверяет, что ключевые факты (числа, даты, имена, места, цитаты) из оригинала сохранились в переписанном тексте.</summary>

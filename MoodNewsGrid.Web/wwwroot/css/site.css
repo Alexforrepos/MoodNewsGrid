@@ -40,6 +40,10 @@ body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f9; color
 
 .facts-ok { color: #1a7f37; background: #e9f7ee; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
 .facts-warning { color: #8a4b00; background: #fff3e0; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+.rate-limit-warning { color: #9a1a1a; background: #fdecec; border: 1px solid #f5c2c2; padding: 10px 14px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+.news-mood { margin-top: 10px; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: .03em; }
+.news-mood.pending { color: #9a1a1a; }
 
 .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .compare-col { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px; }
